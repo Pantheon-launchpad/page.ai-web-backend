@@ -8,8 +8,6 @@ This is the backend API for the project. It is built with Node.js and Express.js
 
 - Node.js
 - Express.js
-- MongoDB
-- Mongoose
 - Dotenv
 - Helmet
 - Morgan
