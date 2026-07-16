@@ -8,6 +8,8 @@ This is the backend API for the project. It is built with Node.js and Express.js
 
 - Node.js
 - Express.js
+- MongoDB
+- Mongoose
 - Dotenv
 - Helmet
 - Morgan
@@ -67,6 +69,8 @@ The server will run on:
 http://localhost:5000
 ```
 
+
+
 ## API Health Check
 
 ### GET /
@@ -95,3 +99,11 @@ Allows communication between the frontend and backend.
 
 ### Express JSON
 Allows the server to receive JSON data.
+
+## Scripts
+
+| Command | Description |
+
+| `npm start` | Starts the server |
+| `npm run dev` | Starts server with Nodemon |
+
