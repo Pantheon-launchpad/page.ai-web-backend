@@ -22,13 +22,13 @@ This is the backend API for the project. It is built with Node.js and Express.js
 Clone the repository:
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Pantheon-launchpad/page.ai-web-backend.git
 ```
 
 Navigate into the backend folder:
 
 ```bash
-cd backend
+cd page.ai-web-backend
 ```
 
 Install dependencies:
