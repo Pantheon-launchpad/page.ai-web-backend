@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan("dev"));
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.status(200).json({ sucess: true, message: "API IS RUNNING" });
 });
 export default app;
