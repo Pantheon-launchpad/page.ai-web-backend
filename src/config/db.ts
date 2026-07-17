@@ -8,7 +8,7 @@ const connectDB = async (): Promise<void> => {
     console.log(chalk.bgCyanBright(`🍃 MongoDB Connected: ${conn.connection.host}`));
   } catch (error) {
     console.error(chalk.red(`❌ MongoDB connection error: ${(error as Error).message}`));
-    process.exit(1);
+    throw error;
   }
 };
 
