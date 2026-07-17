@@ -8,6 +8,7 @@
     "start": "node src/server.ts",
     "build": "tsc",
     "dev": "nodemon src/server.ts"
+    
   },
   "repository": {
     "type": "git",
