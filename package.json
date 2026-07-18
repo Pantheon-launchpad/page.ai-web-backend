@@ -2,12 +2,17 @@
   "name": "page.ai-web-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "src/server.ts",
+  "main": "index.js",
   "type": "module",
   "scripts": {
+<<<<<<< HEAD
     "start": "tsx src/server.ts",
     "build": "tsc",
     "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts"
+=======
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+>>>>>>> d1f13a54e54d3219e2698a27c1287e222b155294
   },
   "repository": {
     "type": "git",
@@ -22,24 +27,16 @@
   "homepage": "https://github.com/Pantheon-launchpad/page.ai-web-backend#readme",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "chalk": "^5.6.2",
-    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
+    "express-rate-limit": "^8.6.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
     "morgan": "^1.11.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/morgan": "^1.9.10",
-    "@types/node": "^22.10.0",
-    "nodemon": "^3.1.14",
-    "tsx": "^4.23.1",
-    "typescript": "^5.7.2"
+    "nodemon": "^3.1.14"
   }
 }
