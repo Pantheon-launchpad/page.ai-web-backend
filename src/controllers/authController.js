@@ -115,3 +115,17 @@ export const login = async (req, res) => {
     });
   }
 };
+
+// Google OAuth callback
+export const googleCallback = (req, res) => {
+  try {
+    const user = req.user;
+
+    const token = generateToken(user._id);
+
+    // redirect back to frontend with the token attached
+    res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${token}`);
+  } catch (error) {
+    res.redirect(`${process.env.FRONTEND_URL}/login-failed`);
+  }
+};

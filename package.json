@@ -5,14 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-<<<<<<< HEAD
-    "start": "tsx src/server.ts",
-    "build": "tsc",
-    "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts"
-=======
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
->>>>>>> d1f13a54e54d3219e2698a27c1287e222b155294
   },
   "repository": {
     "type": "git",
@@ -34,7 +28,9 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
-    "morgan": "^1.11.0"
+    "morgan": "^1.11.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
