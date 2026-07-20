@@ -17,6 +17,28 @@ export const notificationsQueue = new Queue("notifications", { connection: redis
 export const aiQueue = new Queue("ai", { connection: redisConnection });
 export const maintenanceQueue = new Queue("maintenance", { connection: redisConnection });
 
+/**
+ * BullMQ's Queue class emits its OWN 'error' events (distinct from the raw
+ * ioredis connection's 'error' event already handled in config/redis.js) —
+ * e.g. when it can't reach Redis to check queue metadata. Without a
+ * listener attached, Node treats those as unhandled and prints a raw stack
+ * trace per occurrence instead of one clean warning. This is a well-known
+ * BullMQ requirement (every Queue/Worker/QueueEvents needs its own 'error'
+ * listener), not optional cleanup.
+ */
+const allQueues = [emailQueue, notificationsQueue, aiQueue, maintenanceQueue];
+const loggedQueueErrorAt = {};
+for (const queue of allQueues) {
+  queue.on("error", (err) => {
+    const now = Date.now();
+    const lastLogged = loggedQueueErrorAt[queue.name] || 0;
+    if (now - lastLogged > 5 * 60 * 1000) {
+      console.warn(`[jobs] queue "${queue.name}" error: ${err.message}`);
+      loggedQueueErrorAt[queue.name] = now;
+    }
+  });
+}
+
 const defaultJobOptions = {
   attempts: 3,
   backoff: { type: "exponential", delay: 2000 },
