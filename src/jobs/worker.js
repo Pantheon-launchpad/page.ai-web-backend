@@ -28,6 +28,12 @@ const boot = async () => {
     worker.on("failed", (job, err) => {
       console.error(`[worker:${worker.name}] job "${job?.name}" failed:`, err.message);
     });
+    // Same requirement as Queue (see jobs/queues.js) — a Worker without an
+    // 'error' listener treats connection issues as unhandled instead of a
+    // clean log line.
+    worker.on("error", (err) => {
+      console.warn(`[worker:${worker.name}] error: ${err.message}`);
+    });
   }
 
   startScheduler();
