@@ -11,6 +11,20 @@ if (missing.length && process.env.NODE_ENV !== "test") {
   );
 }
 
+// MONGO_URI specifically is fatal (not just insecure) outside local dev —
+// the app cannot start at all without a real database, and the fallback
+// default (127.0.0.1:27017) can never work on a deployed host. Called out
+// loudly and separately so it isn't lost among the other warnings above.
+// Checks "not development/test" rather than "=== production" specifically,
+// since some hosts don't set NODE_ENV at all.
+if (!process.env.MONGO_URI && !["development", "test"].includes(process.env.NODE_ENV)) {
+  console.error(
+    "\n[env] FATAL: MONGO_URI is not set. " +
+      "\n[env] Set MONGO_URI to a real MongoDB connection string in this host's " +
+      "environment variables (e.g. Render's dashboard -> Environment) and redeploy.\n",
+  );
+}
+
 const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: parseInt(process.env.PORT || "5000", 10),
