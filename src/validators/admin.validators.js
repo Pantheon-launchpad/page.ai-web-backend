@@ -48,3 +48,43 @@ export const updateSchoolSchema = z.object({
   plan: z.enum(["free", "school_basic", "school_premium"]).optional(),
   active: z.boolean().optional(),
 });
+
+export const createContentSchema = z.object({
+  title: z.string().min(1),
+  type: z.enum(["video", "pdf", "article", "audio", "past_question"]),
+  subjectId: z.string().optional(),
+  url: z.string().optional(),
+  thumbnail: z.string().optional(),
+  durationMinutes: z.number().optional(),
+  description: z.string().optional(),
+  schoolId: z.string().nullable().optional(), // ignored for school_admin — see resolveCreateSchoolId
+});
+
+export const updateContentSchema = createContentSchema.partial();
+
+export const createExamConfigSchema = z.object({
+  title: z.string().min(1),
+  subject: z.string().min(1),
+  subjects: z.array(z.string()).optional(),
+  board: z.enum(["WAEC", "JAMB", "Mock"]),
+  kind: z.enum(["paper", "mock_exam"]).optional(),
+  durationMinutes: z.number().positive(),
+  questionCount: z.number().positive(),
+  hasCalculator: z.boolean().optional(),
+  coinsReward: z.number().nonnegative().optional(),
+  schoolId: z.string().nullable().optional(),
+});
+
+export const updateExamConfigSchema = createExamConfigSchema.partial();
+
+export const createStoreItemSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+  cost: z.number().positive(),
+  kind: z.enum(["premium_time", "bonus_content", "cosmetic"]),
+  comingSoon: z.boolean().optional(),
+  schoolId: z.string().nullable().optional(),
+});
+
+export const updateStoreItemSchema = createStoreItemSchema.partial();

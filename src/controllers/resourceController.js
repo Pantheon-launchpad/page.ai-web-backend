@@ -4,7 +4,7 @@ import { sendSuccess } from "../utils/apiResponse.js";
 
 export const listResources = asyncHandler(async (req, res) => {
   const { type, subject, search } = req.query;
-  const data = await resourceService.listResources(req.user._id, { type, subject, search });
+  const data = await resourceService.listResources(req.user, { type, subject, search });
   sendSuccess(res, { data });
 });
 

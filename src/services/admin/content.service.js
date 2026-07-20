@@ -1,23 +1,21 @@
-import Subject from "../../models/Subject.js";
 import Resource from "../../models/Resource.js";
-import Question from "../../models/Question.js";
 import { ApiError } from "../../utils/ApiError.js";
 
 /**
- * "Content" spans multiple underlying collections (subjects/resources/
- * questions) that don't have a shared `status` field today — the contract
- * suggests either a dedicated admin_content collection or reusing existing
- * collections with a shared status field (TECHNICAL_DOCUMENTATION.md §14).
- * This implementation takes the reuse path: it surfaces resources (which
- * already carry the fields admin content-management needs) as "content
- * items" and treats subjects/questions as read-only reference data here.
- * A dedicated status field is added to Resource on demand below.
+ * "Content" = the Resource collection (videos/PDFs/articles/audio/past
+ * questions). Tenant-aware: schoolId null = platform-wide, set = exclusive
+ * to that school. See utils/tenantFilter.js for the matching student-facing
+ * read path, and assertContentInScope/resolveCreateSchoolId in
+ * schoolScope.middleware.js for how mutations are restricted per-tenant.
  */
-export const listContent = async ({ page = 1, pageSize = 20 } = {}) => {
+export const listContent = async ({ page = 1, pageSize = 20, schoolScope } = {}) => {
+  const filter = {};
+  if (schoolScope) filter.schoolId = schoolScope;
+
   const skip = (page - 1) * pageSize;
   const [items, total] = await Promise.all([
-    Resource.find().sort({ createdAt: -1 }).skip(skip).limit(pageSize).populate("subjectId", "name"),
-    Resource.countDocuments(),
+    Resource.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageSize).populate("subjectId", "name"),
+    Resource.countDocuments(filter),
   ]);
   return {
     items: items.map((r) => ({
@@ -26,12 +24,24 @@ export const listContent = async ({ page = 1, pageSize = 20 } = {}) => {
       title: r.title,
       subject: r.subjectId?.name,
       status: r.status || "published",
+      schoolId: r.schoolId,
       updatedAt: r.updatedAt,
     })),
     page: Number(page),
     pageSize: Number(pageSize),
     total,
   };
+};
+
+export const createContent = async (data) => {
+  const resource = await Resource.create(data);
+  return { id: resource._id, title: resource.title, type: resource.type, schoolId: resource.schoolId };
+};
+
+export const updateContent = async (id, updates) => {
+  const resource = await Resource.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+  if (!resource) throw ApiError.notFound("Content item not found");
+  return resource;
 };
 
 export const updateContentStatus = async (id, status) => {

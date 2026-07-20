@@ -6,6 +6,7 @@ import StoreItem from "../models/StoreItem.js";
 import { ApiError } from "../utils/ApiError.js";
 import { notificationsQueue, enqueueOrRun } from "../jobs/queues.js";
 import { createNotification } from "../jobs/processors/notifications.processor.js";
+import { tenantVisibilityFilter } from "../utils/tenantFilter.js";
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -129,8 +130,8 @@ export const getRecentRewards = async (userId) => {
   return txns.map((t) => ({ id: t._id, label: t.label, coins: t.coins, createdAt: t.createdAt }));
 };
 
-export const getStoreItems = async () => {
-  const items = await StoreItem.find();
+export const getStoreItems = async (user) => {
+  const items = await StoreItem.find(tenantVisibilityFilter(user));
   return items.map((i) => ({
     id: i._id,
     title: i.title,
@@ -147,10 +148,13 @@ export const getStoreItems = async () => {
  * the client's cached wallet state (API_CONTRACT.md §17 / TECHNICAL_DOCUMENTATION.md §19).
  * Every redemption resolves to in-app value only — never cash/airtime/data.
  */
-export const redeemItem = async (userId, itemId) => {
+export const redeemItem = async (userId, itemId, requesterSchoolId) => {
   const item = await StoreItem.findById(itemId);
   if (!item) throw ApiError.notFound("Store item not found");
   if (item.comingSoon) throw ApiError.badRequest("This item is not yet available for redemption");
+  if (item.schoolId && item.schoolId.toString() !== requesterSchoolId?.toString()) {
+    throw ApiError.forbidden("This item is exclusive to another school");
+  }
 
   const wallet = await getOrCreateWallet(userId);
   if (wallet.storeCredit < item.cost) throw ApiError.badRequest("Insufficient store credit");

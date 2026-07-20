@@ -38,3 +38,32 @@ export const assertUserInScope = async (req, targetUserId) => {
     throw ApiError.forbidden("This user is not in your school");
   }
 };
+
+/**
+ * Generic version of assertUserInScope for tenant-scoped CONTENT (Resource,
+ * ExamConfig, StoreItem) rather than users. A school_admin may only
+ * mutate content that belongs to their OWN school — never platform-wide
+ * content (schoolId: null) and never another school's content. Unscoped
+ * callers (super_admin/moderator) can mutate anything, including
+ * platform-wide content.
+ */
+export const assertContentInScope = async (req, Model, id) => {
+  if (!req.schoolScope) return; // unscoped — no restriction
+  const doc = await Model.findById(id).select("schoolId");
+  if (!doc) throw ApiError.notFound("Not found");
+  if (!doc.schoolId || doc.schoolId.toString() !== req.schoolScope) {
+    throw ApiError.forbidden("This item does not belong to your school");
+  }
+};
+
+/**
+ * A school_admin creating content is always forced onto their own
+ * schoolId — the client can never set schoolId to another tenant, or to
+ * null (platform-wide), by passing a different value in the request body.
+ * Only unscoped callers (super_admin/moderator) may set schoolId freely
+ * (including null, for platform-wide content).
+ */
+export const resolveCreateSchoolId = (req, requestedSchoolId) => {
+  if (req.schoolScope) return req.schoolScope;
+  return requestedSchoolId ?? null;
+};

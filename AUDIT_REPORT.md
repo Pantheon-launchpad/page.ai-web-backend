@@ -151,3 +151,43 @@ All four required either a new dependency (`bullmq`, `ioredis`, `cloudinary`,
 `node-cron`) or a data-model addition (`School`, `PendingAction`,
 `schoolId` on `User`) — none touch or break the endpoints/response shapes
 already covering `API_CONTRACT.md`.
+
+---
+
+## Addendum — Third Pass (Full Multi-Tenancy)
+
+The second pass scoped *users* and *reports* to a school but explicitly left
+content unscoped, flagging it as a gap. This pass closes it: `Resource`
+(learning content), `ExamConfig` (CBT papers/mock exams), and `StoreItem`
+(wallet redemptions) all gained a nullable `schoolId` — `null` means
+platform-wide (visible to everyone), a set value means exclusive to that
+school's own students.
+
+- **Read path**: `utils/tenantFilter.js` provides one shared
+  `tenantVisibilityFilter(user)` helper, applied in `resource.service.js`,
+  `cbt.service.js` (papers/mock exams), and `wallet.service.js` (store
+  items) — a user with no school sees only platform-wide content; a user
+  in a school sees platform-wide content plus their own school's exclusive
+  content, never another school's.
+- **Direct-access enforcement**: listing filters alone don't stop a direct
+  `GET`/`POST` by id if someone shares or guesses one — `cbt.service.js`'s
+  `assertExamAccessible` and `wallet.service.js`'s redemption check both
+  independently verify the target belongs to the requester's school (or is
+  platform-wide) before allowing access/redemption.
+- **Write path (Admin API)**: new tenant-aware CRUD for all three
+  collections (`/admin/content`, `/admin/exams`, `/admin/store-items`).
+  `middleware/schoolScope.middleware.js` gained two generic helpers reused
+  across all three: `assertContentInScope` (a `school_admin` can only
+  mutate their own school's items — never platform-wide content, never
+  another school's) and `resolveCreateSchoolId` (a `school_admin` creating
+  an item is always forced onto their own `schoolId`, regardless of what
+  the request body claims; only `super_admin`/`moderator` may set
+  `schoolId` freely, including `null` for platform-wide).
+- **Deliberately still out of scope**: `Subject`/`Topic`/`Question` remain
+  platform-wide/unscoped. These represent curriculum taxonomy (WAEC/JAMB
+  syllabus structure), which is the same across every school by design —
+  scoping them would mean re-litigating the curriculum per school, not a
+  content-ownership problem. If a school ever needs custom questions, the
+  existing `ExamConfig.schoolId` + `Question.examConfigId` relationship
+  already supports a school-exclusive exam built from platform-wide
+  questions, without needing the question bank itself to be tenant-scoped.

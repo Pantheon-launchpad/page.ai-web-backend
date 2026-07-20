@@ -2,17 +2,19 @@ import ExamConfig from "../models/ExamConfig.js";
 import ExamAttempt from "../models/ExamAttempt.js";
 import Question from "../models/Question.js";
 import ActivityLog from "../models/ActivityLog.js";
+import User from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { awardCoins } from "./wallet.service.js";
 import { bumpStreak } from "./streak.service.js";
+import { tenantVisibilityFilter } from "../utils/tenantFilter.js";
 
-export const listPapers = async () => {
-  const papers = await ExamConfig.find({ kind: "paper" });
+export const listPapers = async (user) => {
+  const papers = await ExamConfig.find({ kind: "paper", ...tenantVisibilityFilter(user) });
   return papers.map(serializeConfig);
 };
 
-export const listMockExams = async () => {
-  const exams = await ExamConfig.find({ kind: "mock_exam" });
+export const listMockExams = async (user) => {
+  const exams = await ExamConfig.find({ kind: "mock_exam", ...tenantVisibilityFilter(user) });
   return exams.map(serializeConfig);
 };
 
@@ -27,9 +29,27 @@ const serializeConfig = (e) => ({
   hasCalculator: e.hasCalculator,
 });
 
-export const getExamQuestions = async (examId) => {
+/**
+ * A school-exclusive exam (schoolId set) must not be accessible to a user
+ * outside that school, even if they guess/share the examId directly —
+ * listPapers/listMockExams already hide it from listings, but that alone
+ * doesn't stop a direct GET/POST by id, hence this explicit check. Takes a
+ * userId (not a full user doc) so callers — including the offline sync
+ * replay path in services/sync.service.js — don't need to thread a full
+ * req.user through; it's looked up once here instead.
+ */
+const assertExamAccessible = async (exam, userId) => {
+  if (!exam.schoolId) return; // platform-wide — always accessible
+  const requester = await User.findById(userId).select("schoolId");
+  if (!requester?.schoolId || requester.schoolId.toString() !== exam.schoolId.toString()) {
+    throw ApiError.forbidden("This exam is exclusive to another school");
+  }
+};
+
+export const getExamQuestions = async (userId, examId) => {
   const exam = await ExamConfig.findById(examId);
   if (!exam) throw ApiError.notFound("Exam not found");
+  await assertExamAccessible(exam, userId);
 
   const questions = await Question.find({ examConfigId: examId }).limit(exam.questionCount);
   return questions.map((q) => ({
@@ -45,6 +65,7 @@ const RESUBMIT_WINDOW_MS = 5 * 60 * 1000;
 export const submitExam = async (userId, examId, { answers, timeTakenSeconds }) => {
   const exam = await ExamConfig.findById(examId);
   if (!exam) throw ApiError.notFound("Exam not found");
+  await assertExamAccessible(exam, userId);
 
   const recent = await ExamAttempt.findOne({ userId, examConfigId: examId }).sort({ submittedAt: -1 });
   if (recent && Date.now() - new Date(recent.submittedAt).getTime() < RESUBMIT_WINDOW_MS) {

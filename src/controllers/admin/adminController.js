@@ -1,10 +1,12 @@
 import asyncHandler from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
-import { assertUserInScope } from "../../middleware/schoolScope.middleware.js";
+import { assertUserInScope, assertContentInScope, resolveCreateSchoolId } from "../../middleware/schoolScope.middleware.js";
 
 import * as dashboardService from "../../services/admin/dashboard.service.js";
 import * as usersService from "../../services/admin/users.service.js";
 import * as contentService from "../../services/admin/content.service.js";
+import * as examConfigsService from "../../services/admin/examConfigs.service.js";
+import * as storeItemsService from "../../services/admin/storeItems.service.js";
 import * as reportsService from "../../services/admin/reports.service.js";
 import * as withdrawalsService from "../../services/admin/withdrawals.service.js";
 import * as analyticsService from "../../services/admin/analytics.service.js";
@@ -13,6 +15,9 @@ import * as rolesService from "../../services/admin/roles.service.js";
 import * as auditLogsService from "../../services/admin/auditLogs.service.js";
 import * as systemHealthService from "../../services/admin/systemHealth.service.js";
 import * as schoolService from "../../services/school.service.js";
+import Resource from "../../models/Resource.js";
+import ExamConfig from "../../models/ExamConfig.js";
+import StoreItem from "../../models/StoreItem.js";
 
 // --- Dashboard ---
 export const getDashboard = asyncHandler(async (req, res) => {
@@ -50,14 +55,63 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
 // --- Content ---
 export const listContent = asyncHandler(async (req, res) => {
-  sendSuccess(res, { data: await contentService.listContent(req.query) });
+  sendSuccess(res, { data: await contentService.listContent({ ...req.query, schoolScope: req.schoolScope }) });
+});
+export const createContent = asyncHandler(async (req, res) => {
+  const schoolId = resolveCreateSchoolId(req, req.body.schoolId);
+  const data = await contentService.createContent({ ...req.body, schoolId });
+  sendSuccess(res, { data, status: 201, message: "Content created" });
+});
+export const updateContent = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, Resource, req.params.id);
+  sendSuccess(res, { data: await contentService.updateContent(req.params.id, req.body), message: "Content updated" });
 });
 export const updateContentStatus = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, Resource, req.params.id);
   sendSuccess(res, { data: await contentService.updateContentStatus(req.params.id, req.body.status) });
 });
 export const deleteContent = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, Resource, req.params.id);
   await contentService.deleteContent(req.params.id);
   sendSuccess(res, { data: null, message: "Content deleted" });
+});
+
+// --- Exam configs (CBT papers/mock exams) ---
+export const listExamConfigs = asyncHandler(async (req, res) => {
+  sendSuccess(res, { data: await examConfigsService.listExamConfigs({ ...req.query, schoolScope: req.schoolScope }) });
+});
+export const createExamConfig = asyncHandler(async (req, res) => {
+  const schoolId = resolveCreateSchoolId(req, req.body.schoolId);
+  const data = await examConfigsService.createExamConfig({ ...req.body, schoolId });
+  sendSuccess(res, { data, status: 201, message: "Exam config created" });
+});
+export const updateExamConfig = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, ExamConfig, req.params.id);
+  sendSuccess(res, { data: await examConfigsService.updateExamConfig(req.params.id, req.body), message: "Exam config updated" });
+});
+export const deleteExamConfig = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, ExamConfig, req.params.id);
+  await examConfigsService.deleteExamConfig(req.params.id);
+  sendSuccess(res, { data: null, message: "Exam config deleted" });
+});
+
+// --- Store items ---
+export const listStoreItems = asyncHandler(async (req, res) => {
+  sendSuccess(res, { data: await storeItemsService.listStoreItemsAdmin({ ...req.query, schoolScope: req.schoolScope }) });
+});
+export const createStoreItem = asyncHandler(async (req, res) => {
+  const schoolId = resolveCreateSchoolId(req, req.body.schoolId);
+  const data = await storeItemsService.createStoreItem({ ...req.body, schoolId });
+  sendSuccess(res, { data, status: 201, message: "Store item created" });
+});
+export const updateStoreItem = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, StoreItem, req.params.id);
+  sendSuccess(res, { data: await storeItemsService.updateStoreItem(req.params.id, req.body), message: "Store item updated" });
+});
+export const deleteStoreItem = asyncHandler(async (req, res) => {
+  await assertContentInScope(req, StoreItem, req.params.id);
+  await storeItemsService.deleteStoreItem(req.params.id);
+  sendSuccess(res, { data: null, message: "Store item deleted" });
 });
 
 // --- Reports ---

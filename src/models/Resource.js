@@ -10,6 +10,9 @@ const resourceSchema = new mongoose.Schema(
     durationMinutes: { type: Number, default: 0 },
     description: { type: String, default: "" },
     status: { type: String, enum: ["published", "draft", "flagged", "removed"], default: "published" },
+    // null = platform-wide (visible to every user); set = exclusive to that
+    // school's own users. See utils/tenantFilter.js.
+    schoolId: { type: mongoose.Schema.Types.ObjectId, ref: "School", default: null, index: true },
   },
   { timestamps: true },
 );

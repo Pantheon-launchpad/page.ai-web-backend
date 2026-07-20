@@ -15,6 +15,12 @@ import {
   updateRoleSchema,
   createSchoolSchema,
   updateSchoolSchema,
+  createContentSchema,
+  updateContentSchema,
+  createExamConfigSchema,
+  updateExamConfigSchema,
+  createStoreItemSchema,
+  updateStoreItemSchema,
 } from "../../validators/admin.validators.js";
 
 const router = express.Router();
@@ -62,8 +68,22 @@ router.delete(
 );
 
 router.get("/content", validate({ query: listQuerySchema }), adminController.listContent);
+router.post(
+  "/content",
+  requirePermission("content:edit"),
+  validate({ body: createContentSchema }),
+  auditLog("create_content"),
+  adminController.createContent,
+);
 router.patch(
   "/content/:id",
+  requirePermission("content:edit"),
+  validate({ body: updateContentSchema }),
+  auditLog("update_content", (req) => req.params.id),
+  adminController.updateContent,
+);
+router.patch(
+  "/content/:id/status",
   requirePermission("content:edit"),
   validate({ body: updateContentStatusSchema }),
   auditLog("update_content_status", (req) => req.params.id),
@@ -74,6 +94,52 @@ router.delete(
   requirePermission("content:edit"),
   auditLog("delete_content", (req) => req.params.id),
   adminController.deleteContent,
+);
+
+// --- Exam configs (CBT papers/mock exams) ---
+router.get("/exams", validate({ query: listQuerySchema }), adminController.listExamConfigs);
+router.post(
+  "/exams",
+  requirePermission("content:edit"),
+  validate({ body: createExamConfigSchema }),
+  auditLog("create_exam_config"),
+  adminController.createExamConfig,
+);
+router.patch(
+  "/exams/:id",
+  requirePermission("content:edit"),
+  validate({ body: updateExamConfigSchema }),
+  auditLog("update_exam_config", (req) => req.params.id),
+  adminController.updateExamConfig,
+);
+router.delete(
+  "/exams/:id",
+  requirePermission("content:edit"),
+  auditLog("delete_exam_config", (req) => req.params.id),
+  adminController.deleteExamConfig,
+);
+
+// --- Store items ---
+router.get("/store-items", validate({ query: listQuerySchema }), adminController.listStoreItems);
+router.post(
+  "/store-items",
+  requirePermission("content:edit"),
+  validate({ body: createStoreItemSchema }),
+  auditLog("create_store_item"),
+  adminController.createStoreItem,
+);
+router.patch(
+  "/store-items/:id",
+  requirePermission("content:edit"),
+  validate({ body: updateStoreItemSchema }),
+  auditLog("update_store_item", (req) => req.params.id),
+  adminController.updateStoreItem,
+);
+router.delete(
+  "/store-items/:id",
+  requirePermission("content:edit"),
+  auditLog("delete_store_item", (req) => req.params.id),
+  adminController.deleteStoreItem,
 );
 
 router.get("/reports", requirePermission("reports:view"), validate({ query: listQuerySchema }), adminController.listReports);

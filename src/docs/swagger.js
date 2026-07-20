@@ -178,8 +178,34 @@ export const swaggerDocument = {
     "/admin/users/{id}/suspend": { ...simplePost("Suspend a user", ["Admin"]) },
     "/admin/users/{id}/ban": { ...simplePost("Ban a user", ["Admin"]) },
     "/admin/users/{id}/reinstate": { ...simplePost("Reinstate a user", ["Admin"]) },
-    "/admin/content": { ...simpleGet("List content (admin)", ["Admin"]) },
-    "/admin/reports": { ...simpleGet("List moderation reports", ["Admin"]) },
+    "/admin/content": {
+      ...simpleGet("List content (admin, tenant-scoped)", ["Admin"]),
+      post: { summary: "Create content (admin, tenant-scoped)", tags: ["Admin"], security: [bearerAuth], responses: { 201: { description: "Created" } } },
+    },
+    "/admin/content/{id}": {
+      patch: { summary: "Update content", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+      delete: { summary: "Delete content", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+    },
+    "/admin/content/{id}/status": {
+      patch: { summary: "Update content moderation status", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+    },
+    "/admin/exams": {
+      ...simpleGet("List exam configs (admin, tenant-scoped)", ["Admin"]),
+      post: { summary: "Create an exam config (admin, tenant-scoped)", tags: ["Admin"], security: [bearerAuth], responses: { 201: { description: "Created" } } },
+    },
+    "/admin/exams/{id}": {
+      patch: { summary: "Update an exam config", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+      delete: { summary: "Delete an exam config", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+    },
+    "/admin/store-items": {
+      ...simpleGet("List store items (admin, tenant-scoped)", ["Admin"]),
+      post: { summary: "Create a store item (admin, tenant-scoped)", tags: ["Admin"], security: [bearerAuth], responses: { 201: { description: "Created" } } },
+    },
+    "/admin/store-items/{id}": {
+      patch: { summary: "Update a store item", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+      delete: { summary: "Delete a store item", tags: ["Admin"], security: [bearerAuth], responses: { 200: { description: "OK" } } },
+    },
+    "/admin/reports": { ...simpleGet("List moderation reports (tenant-scoped)", ["Admin"]) },
     "/admin/withdrawals": { ...simpleGet("List store-credit redemptions for review", ["Admin"]) },
     "/admin/withdrawals/{id}/approve": { ...simplePost("Approve a redemption", ["Admin"]) },
     "/admin/withdrawals/{id}/reject": { ...simplePost("Reject a redemption (refunds credit)", ["Admin"]) },

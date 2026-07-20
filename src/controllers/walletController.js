@@ -22,11 +22,11 @@ export const getRecentRewards = asyncHandler(async (req, res) => {
 });
 
 export const getStoreItems = asyncHandler(async (req, res) => {
-  sendSuccess(res, { data: await walletService.getStoreItems() });
+  sendSuccess(res, { data: await walletService.getStoreItems(req.user) });
 });
 
 export const redeemItem = asyncHandler(async (req, res) => {
-  const data = await walletService.redeemItem(req.user._id, req.params.itemId);
+  const data = await walletService.redeemItem(req.user._id, req.params.itemId, req.user.schoolId);
   await ActivityLog.create({ userId: req.user._id, type: "store_redeem", label: "Redeemed a store item" });
   sendSuccess(res, { data });
 });

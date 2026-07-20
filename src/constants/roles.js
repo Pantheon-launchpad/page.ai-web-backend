@@ -12,6 +12,10 @@ export const ALL_ROLES = Object.values(ROLES);
 
 // Simple string-permission model per TECHNICAL_DOCUMENTATION.md §17.
 // super_admin implicitly has ["*"] — checked separately in role.middleware.js
+// NOTE: "content:edit" gates mutations on Resource, ExamConfig, AND
+// StoreItem — there's no separate permission per collection in this pass,
+// since all three follow the identical tenant-scoped content-CRUD pattern
+// (see services/admin/content|examConfigs|storeItems.service.js).
 export const ROLE_PERMISSIONS = Object.freeze({
   [ROLES.MODERATOR]: [
     "users:suspend",

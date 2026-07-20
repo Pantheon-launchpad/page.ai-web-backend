@@ -11,6 +11,9 @@ const examConfigSchema = new mongoose.Schema(
     questionCount: { type: Number, required: true },
     hasCalculator: { type: Boolean, default: false },
     coinsReward: { type: Number, default: 50 },
+    // null = platform-wide (e.g. official WAEC/JAMB papers); set = a
+    // school's own custom paper/mock exam, exclusive to their students.
+    schoolId: { type: mongoose.Schema.Types.ObjectId, ref: "School", default: null, index: true },
   },
   { timestamps: true },
 );

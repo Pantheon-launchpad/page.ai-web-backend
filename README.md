@@ -172,33 +172,53 @@ order-sensitive.
 
 ## Multi-tenancy (schools)
 
-A `School` model plus `User.schoolId` scope the Admin API for the
-`school_admin` role. Enforced by `middleware/schoolScope.middleware.js`,
-applied to every `/admin/*` route:
+A `School` model scopes both **who** (users, reports) and **what** (content)
+across the platform. Every tenant-scoped collection uses the same rule:
+`schoolId: null` = platform-wide (visible to everyone), `schoolId: <id>` =
+exclusive to that school's own users. Scoped collections: `User`,
+`Resource` (learning content), `ExamConfig` (CBT papers/mock exams), and
+`StoreItem` (wallet redemptions).
 
-- **`super_admin` / `moderator`**: unscoped, platform-wide visibility (unchanged).
-- **`school_admin`**: every listing (`/admin/users`, `/admin/reports`) is
-  automatically filtered to their own `schoolId`, and every single-resource
-  mutation (`/admin/users/:id/suspend`, `/ban`, `/edit`, `/delete`) is
-  rejected with `403 FORBIDDEN` if the target user isn't in their school —
-  checked server-side (`assertUserInScope`), never trusting the frontend to
-  only show in-scope users.
+**Enforcement — read path** (`utils/tenantFilter.js`, applied in
+`resource.service.js`, `cbt.service.js`, `wallet.service.js`): a user with
+no school sees only platform-wide content; a user in a school sees
+platform-wide content *plus* their own school's exclusive content, never
+another school's. Direct-access-by-id is checked independently (not just
+list filtering) in `cbt.service.js` (`assertExamAccessible`) and wallet
+redemption, so guessing/sharing an id from another school doesn't work.
+
+**Enforcement — write path** (`/admin/*`, `middleware/schoolScope.middleware.js`,
+applied to every `/admin/*` route):
+- **`super_admin` / `moderator`**: unscoped, platform-wide visibility and
+  can create/edit content with any `schoolId` (including `null`).
+- **`school_admin`**: every listing (`/admin/users`, `/admin/reports`,
+  `/admin/content`, `/admin/exams`, `/admin/store-items`) is automatically
+  filtered to their own `schoolId`. Every mutation on a specific resource
+  (suspend/ban/edit a user; edit/delete content, an exam config, or a store
+  item) is rejected with `403 FORBIDDEN` if the target isn't in their
+  school — checked server-side, never trusted from the frontend. Creating
+  new content always forces `schoolId` to their own school, regardless of
+  what the request body claims — they cannot create platform-wide content
+  or content for another school.
 - A `school_admin` with no `schoolId` assigned is rejected outright on any
   admin route, rather than silently getting global or zero access.
 
 **Joining a school**: `POST /auth/signup` accepts an optional `schoolCode`;
 if it resolves to a real `School`, the new user is tagged with that
-`schoolId` at creation. A school's own admin self-service endpoints
+`schoolId` at creation (seed script includes a demo school, code
+`DEMOSCH1`). A school's own admin self-service endpoints
 (`GET/PATCH /admin/schools/me/profile`, `GET /admin/schools/me/students`)
-always use the caller's own `schoolId` — never a client-supplied id — so a
-`school_admin` can't read or edit another school by guessing its id.
+always use the caller's own `schoolId` — never a client-supplied id.
 Global school CRUD (`/admin/schools`, `/admin/schools/:id`) is
 `super_admin`-only for mutations.
 
-Content (`Resource`) remains platform-wide/unscoped — it isn't modeled as
-school-owned in this pass. If per-school content libraries become a real
-requirement, that needs its own design pass (a `schoolId` on `Resource`
-plus visibility rules), not just reusing this scoping middleware.
+**Deliberately still platform-wide/unscoped**: `Subject`, `Topic`, and
+`Question` (curriculum taxonomy — the same WAEC/JAMB syllabus structure
+applies to every school, so scoping it doesn't make pedagogical sense). A
+school that needs its own exam content can still do so today: create a
+school-exclusive `ExamConfig` (`schoolId` set) built from the shared,
+platform-wide `Question` bank — the exam wrapper is tenant-scoped even
+though the underlying question bank isn't.
 
 ## Authentication flow
 
@@ -222,8 +242,6 @@ plus visibility rules), not just reusing this scoping middleware.
   pretending to work.
 - **Payments**: `/premium/upgrade` intentionally refuses to grant Premium
   without a real payment processor integration.
-- **School content scoping**: schools scope users/reports, not `Resource`
-  content — see "Multi-tenancy" above.
 - **Scalability**: dashboard/analytics aggregates still run live on read;
   moving them to Redis-cached reads or a scheduled `platform_stats_daily`
   job (the Redis/BullMQ infra for which now exists) remains a documented

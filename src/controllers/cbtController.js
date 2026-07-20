@@ -3,15 +3,15 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 
 export const listPapers = asyncHandler(async (req, res) => {
-  sendSuccess(res, { data: await cbtService.listPapers() });
+  sendSuccess(res, { data: await cbtService.listPapers(req.user) });
 });
 
 export const listMockExams = asyncHandler(async (req, res) => {
-  sendSuccess(res, { data: await cbtService.listMockExams() });
+  sendSuccess(res, { data: await cbtService.listMockExams(req.user) });
 });
 
 export const getExamQuestions = asyncHandler(async (req, res) => {
-  sendSuccess(res, { data: await cbtService.getExamQuestions(req.params.examId) });
+  sendSuccess(res, { data: await cbtService.getExamQuestions(req.user._id, req.params.examId) });
 });
 
 export const submitExam = asyncHandler(async (req, res) => {

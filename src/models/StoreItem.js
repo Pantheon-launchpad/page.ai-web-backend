@@ -13,6 +13,9 @@ const storeItemSchema = new mongoose.Schema(
       required: true,
     },
     comingSoon: { type: Boolean, default: false },
+    // null = platform-wide store item; set = a school-branded reward
+    // exclusive to that school's students (e.g. "Founder's Day badge").
+    schoolId: { type: mongoose.Schema.Types.ObjectId, ref: "School", default: null, index: true },
   },
   { timestamps: true },
 );
